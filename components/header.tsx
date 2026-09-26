@@ -11,16 +11,27 @@ interface HeaderProps {
   left?: React.ReactNode | boolean;
   center?: React.ReactNode | boolean;
   right?: React.ReactNode | boolean;
-  searchPlaceholder?: string; // Properti placeholder baru
+  searchPlaceholder?: string;
 }
 
 export function Header({
   left = true,
   center = true,
   right = true,
-  searchPlaceholder = "Search...", // Nilai default jika prop tidak diisi
+  searchPlaceholder = "Search...",
 }: HeaderProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const renderSlot = (
+    propValue: React.ReactNode | boolean,
+    defaultContent: React.ReactNode,
+  ) => {
+    if (propValue === false) return null;
+    if (propValue === true || propValue === undefined || propValue === null) {
+      return defaultContent;
+    }
+    return propValue;
+  };
 
   return (
     <>
@@ -28,9 +39,8 @@ export function Header({
         {/* Left Section */}
         {left !== false && (
           <div className="flex items-center">
-            {React.isValidElement(left) ? (
-              left
-            ) : (
+            {renderSlot(
+              left,
               <Link
                 href="/"
                 className="flex items-center gap-3 group select-none"
@@ -40,11 +50,11 @@ export function Header({
                 </div>
                 <h1 className="font-black text-lg tracking-tighter uppercase text-foreground group-hover:text-primary transition-colors">
                   People
-                  <span className="text-primary/90 font-light text-transform-none lowercase">
+                  <span className="text-primary/90 font-light lowercase">
                     fy
                   </span>
                 </h1>
-              </Link>
+              </Link>,
             )}
           </div>
         )}
@@ -52,19 +62,16 @@ export function Header({
         {/* Center Section */}
         {center !== false && (
           <div className="flex-1 max-w-[40%] hidden md:block">
-            {React.isValidElement(center) ? (
-              center
-            ) : (
+            {renderSlot(
+              center,
               <div className="relative w-full group">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/70 transition-colors group-focus-within:text-primary pointer-events-none" />
                 <Input
                   type="text"
-                  placeholder={
-                    searchPlaceholder
-                  } /* Menggunakan variabel properti dinamis */
+                  placeholder={searchPlaceholder}
                   className="w-full h-9 pl-9 pr-4 bg-background border-border transition-all duration-200 focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary shadow-xs rounded-lg text-sm"
                 />
-              </div>
+              </div>,
             )}
           </div>
         )}
@@ -72,9 +79,8 @@ export function Header({
         {/* Right Section */}
         {right !== false && (
           <div className="flex items-center gap-3">
-            {React.isValidElement(right) ? (
-              right
-            ) : (
+            {renderSlot(
+              right,
               <>
                 <Button
                   size="sm"
@@ -85,6 +91,7 @@ export function Header({
                     <span>Setting</span>
                   </Link>
                 </Button>
+
                 <Button
                   size="sm"
                   onClick={() => setIsModalOpen(true)}
@@ -93,7 +100,7 @@ export function Header({
                   <Plus className="w-4 h-4 mr-1.5 transition-transform duration-200 group-hover:rotate-90" />
                   <span>Add People</span>
                 </Button>
-              </>
+              </>,
             )}
           </div>
         )}
