@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Download,
@@ -18,7 +19,10 @@ import {
   Share2,
   ExternalLink,
   Star,
+  Archive,
+  Loader2,
 } from "lucide-react";
+import { toast } from "sonner";
 import {
   FaInstagram,
   FaTwitter,
@@ -27,12 +31,21 @@ import {
   FaFacebook,
   FaPatreon,
 } from "react-icons/fa";
-import { SiGooglechrome } from "react-icons/si";
 import { Header } from "@/components/header";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { PackDetail, MediaItem } from "./page";
+import { API_URL } from "@/constant/variable";
 
-// Helper icon platform upload
 function getPlatformIcon(platform?: string) {
   if (!platform) return <Globe className="w-3.5 h-3.5" />;
   const p = platform.toLowerCase();
@@ -61,11 +74,16 @@ export default function PackContentDetailPageClient({
   personId,
   pack,
 }: ClientProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadingItemId, setDownloadingItemId] = useState<string | null>(
+    null,
+  );
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<"photo" | "video">("photo");
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [scale, setScale] = useState<number>(1);
 
-  // 1. FILTER ITEMS HARUS BERADA DI ATAS agar bisa dibaca oleh fungsi & useEffect di bawahnya
   const filteredItems = useMemo(() => {
     return pack.items.filter((item) =>
       activeTab === "photo" ? item.type === "image" : item.type === "video",
@@ -75,7 +93,112 @@ export default function PackContentDetailPageClient({
   const photoCount = pack.items.filter((i) => i.type === "image").length;
   const videoCount = pack.items.filter((i) => i.type === "video").length;
 
-  // 2. Deklarasikan fungsi navigasi dasar slideshow
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const res = await fetch(
+        `${API_URL}/peoples/${personId}/photopacks/${pack.id}`,
+        {
+          method: "DELETE",
+        },
+      );
+      if (res.ok) {
+        router.push(`/peoples/${personId}`);
+        router.refresh();
+      } else {
+        alert("Gagal menghapus photopack");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Terjadi kesalahan");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const downloadFile = async (url: string, filename: string) => {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Gagal mengambil file: ${url}`);
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = blobUrl;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
+  };
+
+  const handleDownloadItem = async (item: MediaItem, index: number) => {
+    setDownloadingItemId(item.id);
+    const tid = toast.loading("Mengunduh file...");
+    try {
+      const ext =
+        item.type === "video"
+          ? "mp4"
+          : item.url.split(".").pop()?.split("?")[0] || "jpg";
+      const filename = `${pack.title}-${index + 1}.${ext}`;
+      await downloadFile(item.url, filename);
+      toast.success("File berhasil diunduh!", { id: tid });
+    } catch (err) {
+      console.error(err);
+      toast.error("Gagal mengunduh file.", { id: tid });
+    } finally {
+      setDownloadingItemId(null);
+    }
+  };
+
+  const handleDownloadAll = async (items: MediaItem[], label: string) => {
+    if (items.length === 0) {
+      toast.error(`Tidak ada ${label} untuk diunduh.`);
+      return;
+    }
+
+    setIsDownloading(true);
+    const tid = toast.loading(
+      `Mengunduh ${items.length} ${label}... Harap tunggu.`,
+    );
+    try {
+      const JSZip = (await import("jszip")).default;
+      const zip = new JSZip();
+      const folder = zip.folder(pack.title) ?? zip;
+
+      await Promise.all(
+        items.map(async (item, i) => {
+          const res = await fetch(item.url);
+          if (!res.ok) return;
+          const blob = await res.blob();
+          const ext =
+            item.type === "video"
+              ? "mp4"
+              : item.url.split(".").pop()?.split("?")[0] || "jpg";
+          const filename = `${String(i + 1).padStart(3, "0")}.${ext}`;
+          folder.file(filename, blob);
+        }),
+      );
+
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      const zipUrl = URL.createObjectURL(zipBlob);
+      const a = document.createElement("a");
+      a.href = zipUrl;
+      a.download = `${pack.title} - ${label}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(zipUrl);
+
+      toast.success(`${items.length} ${label} berhasil diunduh sebagai ZIP!`, {
+        id: tid,
+      });
+    } catch (err) {
+      console.error(err);
+      toast.error("Gagal membuat ZIP. Coba lagi.", { id: tid });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   const showNext = () => {
     if (selectedIndex === null) return;
     setSelectedIndex((selectedIndex + 1) % filteredItems.length);
@@ -88,7 +211,6 @@ export default function PackContentDetailPageClient({
     );
   };
 
-  // 3. Deklarasikan fungsi wrapper untuk navigasi sekaligus reset zoom
   const handleResetZoom = () => setScale(1);
 
   const handleNext = () => {
@@ -101,7 +223,6 @@ export default function PackContentDetailPageClient({
     handleResetZoom();
   };
 
-  // 4. useEffect untuk mendeteksi scroll mouse (Wheel Event) untuk Zoom Gambar
   useEffect(() => {
     if (
       selectedIndex === null ||
@@ -110,7 +231,7 @@ export default function PackContentDetailPageClient({
       return;
 
     const handleWheel = (e: WheelEvent) => {
-      e.preventDefault(); // Mencegah halaman utama ikut terskrol
+      e.preventDefault();
 
       setScale((prevScale) => {
         const zoomStep = 0.1;
@@ -129,12 +250,10 @@ export default function PackContentDetailPageClient({
     };
   }, [selectedIndex, filteredItems]);
 
-  // 5. useEffect untuk mendeteksi navigasi Keyboard (ArrowRight, ArrowLeft, Escape)
   useEffect(() => {
     if (selectedIndex === null) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // UBAH: Memanggil handleNext / handlePrev agar zoom ter-reset saat pencet keyboard
       if (e.key === "ArrowRight") handleNext();
       if (e.key === "ArrowLeft") handlePrev();
       if (e.key === "Escape") {
@@ -145,13 +264,12 @@ export default function PackContentDetailPageClient({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedIndex, filteredItems]); // Tambahkan filteredItems ke dependency array
+  }, [selectedIndex, filteredItems]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-zinc-950 text-gray-900 dark:text-gray-100">
       <Header
         left={
-          /* Tombol Back menggunakan Shadcn Button Ghost */
           <Link href={`/peoples/${personId}`}>
             <Button
               variant="ghost"
@@ -173,19 +291,61 @@ export default function PackContentDetailPageClient({
         }
         right={
           <div className="flex items-center gap-2">
-            {/* 1. Download Content (Aksi Utama / Paling Kiri) */}
-            <Button
-              variant="outline"
-              size="sm"
-              className="group shadow-xs font-medium tracking-tight cursor-pointer rounded-lg px-3 h-9 text-muted-foreground hover:text-foreground"
-              title="Download Content"
-            >
-              {/* Mengganti ikon menjadi Download */}
-              <Download className="w-3.5 h-3.5 mr-1.5 transition-transform duration-200 group-hover:translate-y-px" />
-              <span>Download</span>
-            </Button>
+            <div className="relative group/dl">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={isDownloading}
+                className="group shadow-xs font-medium tracking-tight cursor-pointer rounded-lg px-3 h-9 text-muted-foreground hover:text-foreground"
+                title="Download Content"
+              >
+                {isDownloading ? (
+                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                ) : (
+                  <Download className="w-3.5 h-3.5 mr-1.5 transition-transform duration-200 group-hover:translate-y-px" />
+                )}
+                <span>{isDownloading ? "Mengunduh..." : "Download"}</span>
+              </Button>
 
-            {/* 2. Edit Content (Aksi Sekunder / Tengah) */}
+              <div className="absolute right-0 top-full pt-1 hidden group-hover/dl:flex flex-col z-50 w-52 rounded-xl border border-border bg-popover shadow-lg overflow-hidden animate-in fade-in-50 slide-in-from-top-2 duration-150">
+                <button
+                  onClick={() =>
+                    handleDownloadAll(
+                      pack.items.filter((i) => i.type === "image"),
+                      "Foto",
+                    )
+                  }
+                  disabled={isDownloading || photoCount === 0}
+                  className="flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-medium text-foreground hover:bg-accent transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  <Archive className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span>Semua Foto ({photoCount}) sebagai ZIP</span>
+                </button>
+                <button
+                  onClick={() =>
+                    handleDownloadAll(
+                      pack.items.filter((i) => i.type === "video"),
+                      "Video",
+                    )
+                  }
+                  disabled={isDownloading || videoCount === 0}
+                  className="flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-medium text-foreground hover:bg-accent transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  <Archive className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span>Semua Video ({videoCount}) sebagai ZIP</span>
+                </button>
+                <div className="border-t border-border my-0.5" />
+                <button
+                  onClick={() => handleDownloadAll(pack.items, "Semua File")}
+                  disabled={isDownloading || pack.items.length === 0}
+                  className="flex items-center gap-2.5 px-3.5 py-2.5 text-xs font-semibold text-foreground hover:bg-accent transition-colors disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span>Download Semua ({pack.items.length} file)</span>
+                </button>
+              </div>
+            </div>
+
             <Link href={`/peoples/${personId}/content/${pack.id}/edit`}>
               <Button
                 variant="outline"
@@ -198,22 +358,57 @@ export default function PackContentDetailPageClient({
               </Button>
             </Link>
 
-            {/* 3. Delete Content (Aksi Destruktif / Paling Kanan) */}
-            <Button
-              variant="destructive"
-              size="sm"
-              className="group shadow-xs font-semibold tracking-tight cursor-pointer rounded-lg px-3 h-9"
-              title="Delete Content"
-            >
-              <Trash2 className="w-3.5 h-3.5 mr-1.5 transition-transform duration-200 group-hover:animate-shake" />
-              <span>Delete</span>
-            </Button>
+            <Dialog>
+              <DialogTrigger
+                disabled={isDeleting}
+                title="Delete Content"
+                className={buttonVariants({
+                  variant: "destructive",
+                  size: "sm",
+                  className:
+                    "group shadow-xs font-semibold tracking-tight cursor-pointer rounded-lg px-3 h-9",
+                })}
+              >
+                <Trash2 className="w-3.5 h-3.5 mr-1.5 transition-transform duration-200 group-hover:animate-shake" />
+                <span>{isDeleting ? "Deleting..." : "Delete"}</span>
+              </DialogTrigger>
+
+              <DialogContent onConfirm={handleDelete} className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Konfirmasi Penghapusan</DialogTitle>
+                  <DialogDescription>
+                    Apakah Anda yakin ingin menghapus photopack "{pack.title}"?
+                    Tindakan ini tidak dapat dibatalkan dan semua media di
+                    dalamnya akan terhapus.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <DialogFooter className="mt-4 gap-2 sm:gap-0">
+                  <DialogClose
+                    type="button"
+                    disabled={isDeleting}
+                    className={buttonVariants({
+                      variant: "outline",
+                      className: "cursor-pointer",
+                    })}
+                  >
+                    Batal
+                  </DialogClose>
+                  <Button
+                    variant="destructive"
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                  >
+                    {isDeleting ? "Menghapus..." : "Hapus Photopack"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         }
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
-        {/* Banner Info Unggahan & Link External (Jika ada) */}
         {(pack.platform || pack.externalUrl) && (
           <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl border border-border/80 bg-muted/40 text-xs">
             <div className="flex items-center gap-2">
@@ -282,7 +477,6 @@ export default function PackContentDetailPageClient({
                     : "border-border hover:border-border/80"
                 }`}
               >
-                {/* 1. Preview Full untuk Tipe Gambar (Photo) */}
                 {item.type === "image" && item.url && (
                   <img
                     src={item.url}
@@ -292,7 +486,6 @@ export default function PackContentDetailPageClient({
                   />
                 )}
 
-                {/* 2. Preview Full untuk Tipe Video */}
                 {item.type === "video" && item.url && (
                   <div className="w-full h-full relative bg-black">
                     <video
@@ -314,7 +507,6 @@ export default function PackContentDetailPageClient({
                   </div>
                 )}
 
-                {/* Badge Cover Utama */}
                 {item.isCover && (
                   <div className="absolute top-2 left-2 z-10 bg-primary text-primary-foreground text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1 shadow-2xs">
                     <Star className="w-3 h-3 fill-current" />
@@ -322,16 +514,34 @@ export default function PackContentDetailPageClient({
                   </div>
                 )}
 
-                {/* Overlay Judul saat hover */}
-                <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 via-black/40 to-transparent p-3 pt-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
-                  {item.title && (
-                    <p className="text-white text-xs font-semibold truncate mb-0.5">
-                      {item.title}
-                    </p>
-                  )}
-                  {item.size && (
-                    <p className="text-zinc-300 text-[10px]">{item.size}</p>
-                  )}
+                <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 via-black/40 to-transparent p-3 pt-10 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="flex items-end justify-between gap-2">
+                    <div className="min-w-0">
+                      {item.title && (
+                        <p className="text-white text-xs font-semibold truncate mb-0.5">
+                          {item.title}
+                        </p>
+                      )}
+                      {item.size && (
+                        <p className="text-zinc-300 text-[10px]">{item.size}</p>
+                      )}
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDownloadItem(item, index);
+                      }}
+                      disabled={downloadingItemId === item.id}
+                      title="Download file ini"
+                      className="shrink-0 p-1.5 bg-white/20 hover:bg-white/40 backdrop-blur-sm rounded-lg text-white transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      {downloadingItemId === item.id ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Download className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -350,7 +560,6 @@ export default function PackContentDetailPageClient({
       {/* SLIDESHOW LIGHTBOX MODAL */}
       {selectedIndex !== null && (
         <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col justify-between p-4 animate-in fade-in duration-200">
-          {/* Bar Atas / Header: Menggunakan flex horizontal 3 bagian */}
           <div className="w-full flex items-center justify-between text-white pb-2 border-b border-zinc-800 shrink-0 h-14">
             {/* KIRI: Informasi Metadata */}
             <div className="w-1/3 min-w-0">
@@ -366,7 +575,6 @@ export default function PackContentDetailPageClient({
               </p>
             </div>
 
-            {/* TENGAH: PANEL KONTROL ZOOM (Hanya untuk gambar, menyatu di Header) */}
             <div className="w-1/3 flex justify-center items-center">
               {filteredItems[selectedIndex].type === "image" && (
                 <div className="flex gap-1 bg-zinc-900 border border-zinc-800 p-1 rounded-xl text-white shadow-xs">
@@ -403,8 +611,26 @@ export default function PackContentDetailPageClient({
               )}
             </div>
 
-            {/* KANAN: Tombol Close */}
-            <div className="w-1/3 flex justify-end">
+            <div className="w-1/3 flex justify-end items-center gap-2">
+              <button
+                onClick={() =>
+                  handleDownloadItem(
+                    filteredItems[selectedIndex],
+                    selectedIndex,
+                  )
+                }
+                disabled={
+                  downloadingItemId === filteredItems[selectedIndex]?.id
+                }
+                title="Download file ini"
+                className="p-2 bg-zinc-900 border border-zinc-800 rounded-full hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors cursor-pointer disabled:opacity-40"
+              >
+                {downloadingItemId === filteredItems[selectedIndex]?.id ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4" />
+                )}
+              </button>
               <button
                 onClick={() => {
                   setSelectedIndex(null);
@@ -417,9 +643,7 @@ export default function PackContentDetailPageClient({
             </div>
           </div>
 
-          {/* Area Tengah: Viewer Konten + Tombol Navigasi */}
           <div className="flex-1 w-full flex items-center justify-between relative my-4 overflow-hidden">
-            {/* Tombol Kiri */}
             <button
               onClick={handlePrev}
               className="absolute left-2 md:left-6 z-30 p-3 bg-black/40 border border-zinc-800 backdrop-blur-md rounded-full text-white hover:bg-zinc-900 transition-colors cursor-pointer"
@@ -427,7 +651,6 @@ export default function PackContentDetailPageClient({
               <ChevronLeft className="w-6 h-6" />
             </button>
 
-            {/* Konten Utama */}
             <div
               id="media-viewer-content"
               className="w-full h-full flex items-center justify-center p-2 relative overflow-auto scrollbar-none"
@@ -452,7 +675,6 @@ export default function PackContentDetailPageClient({
               )}
             </div>
 
-            {/* Tombol Kanan */}
             <button
               onClick={handleNext}
               className="absolute right-2 md:right-6 z-30 p-3 bg-black/40 border border-zinc-800 backdrop-blur-md rounded-full text-white hover:bg-zinc-900 transition-colors cursor-pointer"

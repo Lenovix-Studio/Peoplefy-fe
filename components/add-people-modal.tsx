@@ -1,16 +1,18 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Upload, X, User } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { Upload, User } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { API_URL } from "@/constant/variable";
 
 interface AddPeopleModalProps {
   isOpen: boolean;
@@ -18,27 +20,63 @@ interface AddPeopleModalProps {
 }
 
 export function AddPeopleModal({ isOpen, onClose }: AddPeopleModalProps) {
+  const router = useRouter();
   const [name, setName] = useState("");
   const [preview, setPreview] = useState<string | null>(null);
+  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setFileToUpload(file);
       const imageUrl = URL.createObjectURL(file);
       setPreview(imageUrl);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Logic kirim data ke API/Database
-    console.log({ name, preview });
+    if (!name) return;
 
-    // Reset state & close
-    setName("");
-    setPreview(null);
-    onClose();
+    setIsLoading(true);
+    const tid = toast.loading("Membuat profil baru...");
+
+    try {
+      const res = await fetch(`${API_URL}/peoples`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fullName: name }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+
+        if (fileToUpload) {
+          toast.loading("Mengunggah foto...", { id: tid });
+          const formData = new FormData();
+          formData.append("avatar", fileToUpload);
+
+          await fetch(`${API_URL}/peoples/${data.id}/upload`, {
+            method: "POST",
+            body: formData,
+          });
+        }
+
+        toast.success("Berhasil dibuat! Mengalihkan...", { id: tid });
+        setName("");
+        setPreview(null);
+        setFileToUpload(null);
+        onClose();
+        router.push(`/peoples/${data.id}/edit`);
+      } else {
+        toast.error("Gagal membuat profil.", { id: tid });
+      }
+    } catch (error) {
+      toast.error("Terjadi kesalahan jaringan.", { id: tid });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

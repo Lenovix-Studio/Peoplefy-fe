@@ -3,6 +3,7 @@ export interface CommonCodeType {
   code: string;
   name: string;
   description?: string;
+  details?: CommonCodeDetail[];
 }
 
 export interface CommonCodeDetail {

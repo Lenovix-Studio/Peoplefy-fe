@@ -1,3 +1,4 @@
+import { API_URL } from "@/constant/variable";
 import PackContentDetailPageClient from "./PackContentDetailPageClient";
 
 export interface MediaItem {
@@ -21,46 +22,32 @@ async function getPackDetail(
   personId: string,
   contentId: string,
 ): Promise<PackDetail> {
-  // Simulasi fetch detail konten (nantinya diganti dengan query DB / fetch backend)
+  const res = await fetch(
+    `${API_URL}/peoples/${personId}/photopacks/${contentId}`,
+    {
+      cache: "no-store",
+    },
+  );
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch photopack");
+  }
+
+  const data = await res.json();
+
   return {
-    id: contentId,
-    title: "Ganyu - Spring Blossom Set",
-    platform: "Instagram",
-    externalUrl: "https://instagram.com/p/Cxyz12345",
-    items: [
-      {
-        id: "1",
-        title: "Foto Cover / Portrait 1",
-        type: "image",
-        url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
-        size: "2.4 MB",
-        isCover: true,
-      },
-      {
-        id: "2",
-        title: "Action Pose Spring Set",
-        type: "image",
-        url: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=800&q=80",
-        size: "3.1 MB",
-        isCover: false,
-      },
-      {
-        id: "3",
-        title: "Close Up Details",
-        type: "image",
-        url: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80",
-        size: "2.8 MB",
-        isCover: false,
-      },
-      {
-        id: "4",
-        title: "Short Reel / Teaser",
-        type: "video",
-        url: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
-        size: "15.8 MB",
-        isCover: false,
-      },
-    ],
+    id: data.id,
+    title: data.title,
+    platform: data.platform,
+    externalUrl: data.externalUrl,
+    items: data.media.map((m: any) => ({
+      id: m.id,
+      type: m.type,
+      url: m.url,
+      title: "",
+      size: "",
+      isCover: m.isCover,
+    })),
   };
 }
 
@@ -69,7 +56,6 @@ interface PageProps {
 }
 
 export default async function Page({ params }: PageProps) {
-  // Await params sesuai dengan App Router Next.js terbaru
   const { id, contentId } = await params;
   const pack = await getPackDetail(id, contentId);
 

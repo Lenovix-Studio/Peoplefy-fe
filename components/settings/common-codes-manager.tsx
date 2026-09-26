@@ -23,11 +23,6 @@ interface CommonCodesManagerProps {
 export function CommonCodesManager({ initialTypes }: CommonCodesManagerProps) {
   const [mounted, setMounted] = useState(false);
   const [types, setTypes] = useState<CommonCodeType[]>(initialTypes);
-  const [selectedTypeId, setSelectedTypeId] = useState<string>(
-    initialTypes[0]?.id || "",
-  );
-  const [details, setDetails] = useState<CommonCodeDetail[]>([]);
-  const [loadingDetails, setLoadingDetails] = useState(false);
   const [isTypeDialogOpen, setIsTypeDialogOpen] = useState(false);
   const [newTypeCode, setNewTypeCode] = useState("");
   const [newTypeName, setNewTypeName] = useState("");
@@ -44,6 +39,9 @@ export function CommonCodesManager({ initialTypes }: CommonCodesManagerProps) {
   const [editDetailLabel, setEditDetailLabel] = useState("");
   const [editDetailSortOrder, setEditDetailSortOrder] = useState(0);
   const [editDetailIsActive, setEditDetailIsActive] = useState(true);
+  const [selectedTypeId, setSelectedTypeId] = useState<string>(
+    initialTypes[0]?.id || "",
+  );
   const [deleteConfirmInfo, setDeleteConfirmInfo] = useState<{
     isOpen: boolean;
     type: "type" | "detail" | null;
@@ -71,36 +69,9 @@ export function CommonCodesManager({ initialTypes }: CommonCodesManagerProps) {
     }
   };
 
-  const fetchDetails = async (typeId: string) => {
-    if (!typeId) return;
-    setLoadingDetails(true);
-    try {
-      const res = await fetch(
-        `${API_URL}/common-codes/types/${typeId}/details`,
-        {
-          cache: "no-store",
-        },
-      );
-      if (res.ok) {
-        const data = await res.json();
-        setDetails(data);
-      }
-    } catch (error) {
-      console.error("Failed to fetch details:", error);
-    } finally {
-      setLoadingDetails(false);
-    }
-  };
-
-  useEffect(() => {
-    if (selectedTypeId) {
-      fetchDetails(selectedTypeId);
-    } else {
-      setDetails([]);
-    }
-  }, [selectedTypeId]);
-
   const activeType = types.find((t) => t.id === selectedTypeId);
+  const details = activeType?.details || [];
+  const loadingDetails = false;
 
   const handleAddType = async () => {
     if (!newTypeCode || !newTypeName) {
@@ -189,7 +160,7 @@ export function CommonCodesManager({ initialTypes }: CommonCodesManagerProps) {
         setIsDetailDialogOpen(false);
         setNewDetailCode("");
         setNewDetailLabel("");
-        fetchDetails(selectedTypeId);
+        reloadTypes();
       } else {
         toast.error("Gagal menambahkan Detail.", { id: tid });
       }
@@ -221,7 +192,7 @@ export function CommonCodesManager({ initialTypes }: CommonCodesManagerProps) {
       if (res.ok) {
         toast.success("Berhasil memperbarui Detail Code!", { id: tid });
         setIsEditDetailOpen(false);
-        fetchDetails(selectedTypeId);
+        reloadTypes();
       } else {
         toast.error("Gagal memperbarui Detail.", { id: tid });
       }
@@ -253,7 +224,7 @@ export function CommonCodesManager({ initialTypes }: CommonCodesManagerProps) {
           if (selectedTypeId === id) setSelectedTypeId("");
           reloadTypes();
         } else {
-          fetchDetails(selectedTypeId);
+          reloadTypes();
         }
       } else {
         toast.error(`Gagal menghapus ${isType ? "Type" : "Detail"}.`, {
@@ -427,7 +398,7 @@ export function CommonCodesManager({ initialTypes }: CommonCodesManagerProps) {
                   </td>
                 </tr>
               ) : (
-                details.map((detail) => (
+                details.map((detail: CommonCodeDetail) => (
                   <tr
                     key={detail.id}
                     className="hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"

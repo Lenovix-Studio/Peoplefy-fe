@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { AlertTriangle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { API_URL } from "@/constant/variable";
 import {
   Dialog,
   DialogContent,
@@ -17,16 +18,28 @@ export function DangerZone() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const executeDeleteAll = () => {
+  const executeDeleteAll = async () => {
     setIsDeleting(true);
-    const tid = toast.loading("Sedang menghapus semua data...");
+    const tid = toast.loading("Sedang menghapus semua data & file fisik...");
 
-    // Simulasi penghapusan data
-    setTimeout(() => {
-      toast.success("Seluruh data berhasil dihapus! (Mock)", { id: tid });
+    try {
+      const res = await fetch(`${API_URL}/peoples/wipe/all`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        toast.success("Seluruh data dan file fisik berhasil dihapus!", {
+          id: tid,
+        });
+      } else {
+        toast.error("Gagal menghapus data.", { id: tid });
+      }
+    } catch (e) {
+      toast.error("Terjadi kesalahan jaringan.", { id: tid });
+    } finally {
       setIsDeleting(false);
       setIsDialogOpen(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -41,9 +54,9 @@ export function DangerZone() {
               Danger Zone
             </h3>
             <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
-              Menghapus semua data komik, task, transaksi, dan histori yang ada
-              di Peoplefy. Tindakan ini bersifat destruktif permanen dan tidak
-              dapat dipulihkan.
+              Menghapus semua data person, photopack, media, sosial media,
+              beserta seluruh file fisik di direktori penyimpanan. Common codes
+              tidak akan dihapus. Tindakan ini bersifat destruktif permanen.
             </p>
           </div>
         </div>
