@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AddPeopleModal } from "@/components/add-people-modal";
@@ -75,14 +75,25 @@ export function Header({
             {React.isValidElement(right) ? (
               right
             ) : (
-              <Button
-                size="sm"
-                onClick={() => setIsModalOpen(true)}
-                className="group h-9 px-3.5 shadow-xs font-semibold tracking-tight cursor-pointer rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground"
-              >
-                <Plus className="w-4 h-4 mr-1.5 transition-transform duration-200 group-hover:rotate-90" />
-                <span>Add People</span>
-              </Button>
+              <>
+                <Button
+                  size="sm"
+                  className="group h-9 px-3.5 shadow-xs font-semibold tracking-tight cursor-pointer rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground"
+                >
+                  <Link href="/settings" className="flex items-center">
+                    <Settings className="w-4 h-4 mr-1.5 transition-transform duration-300 group-hover:rotate-45" />
+                    <span>Setting</span>
+                  </Link>
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={() => setIsModalOpen(true)}
+                  className="group h-9 px-3.5 shadow-xs font-semibold tracking-tight cursor-pointer rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground"
+                >
+                  <Plus className="w-4 h-4 mr-1.5 transition-transform duration-200 group-hover:rotate-90" />
+                  <span>Add People</span>
+                </Button>
+              </>
             )}
           </div>
         )}

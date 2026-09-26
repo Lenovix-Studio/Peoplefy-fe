@@ -367,28 +367,7 @@ export default function PersonDetailPage({
             </Button>
           </Link>
         }
-        center={
-          <div className="relative flex-1 group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/70 transition-colors group-focus-within:text-primary pointer-events-none" />
-            <Input
-              type="text"
-              value={searchQuery}
-              onChange={handleSearchChange}
-              placeholder="Search Content..."
-              className="w-full h-9 pl-9 pr-8 bg-background border-border transition-all duration-200 focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary shadow-xs rounded-full text-sm"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={handleClearSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground cursor-pointer"
-                aria-label="Clear search"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-        }
+        center={false}
         right={
           <div className="flex items-center gap-2">
             <Link href={`/peoples/${personDetail.id}/edit`}>
@@ -628,7 +607,8 @@ export default function PersonDetailPage({
 
         <div className="space-y-7 mt-7">
           {/* Tab Navigation */}
-          <div className="border-b border-border flex items-center justify-between gap-4 text-sm font-medium w-full">
+          <div className="border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-sm font-medium w-full pb-2 sm:pb-0">
+            {/* Tab Navigation */}
             <div className="flex gap-6">
               <button
                 onClick={() => setActiveTab("packs")}
@@ -643,16 +623,43 @@ export default function PersonDetailPage({
               </button>
             </div>
 
-            <div className="pb-2">
-              <Link href={`/peoples/${personDetail.id}/content/create`}>
-                <Button
-                  size="lg"
-                  className="group h-9 px-3.5 shadow-xs font-semibold tracking-tight cursor-pointer rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground"
+            {/* Search Box & Add Button */}
+            <div className="flex items-center gap-3 sm:pb-2">
+              {/* Input Box dengan Icon Search */}
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                <Input
+                  type="text"
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  placeholder="Search Content..."
+                  className="w-full h-9 pl-9 pr-3 bg-background border-border transition-all duration-200 focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary shadow-xs rounded-full text-sm"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={handleClearSearch}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground cursor-pointer"
+                    aria-label="Clear search"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Tombol Tambah */}
+              <Button
+                size="sm"
+                className="group h-9 px-3.5 shadow-xs font-semibold tracking-tight cursor-pointer rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground shrink-0"
+              >
+                <Link
+                  href={`/peoples/${personDetail.id}/content/create`}
+                  className="flex items-center"
                 >
                   <Plus className="w-4 h-4 mr-1.5 transition-transform duration-200 group-hover:rotate-90" />
                   <span>Add Content</span>
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             </div>
           </div>
 
