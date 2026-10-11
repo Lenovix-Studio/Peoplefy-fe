@@ -44,6 +44,7 @@ interface WebItem {
 
 interface ClosePersonItem {
   id: string;
+  label: string;
   relation: string;
   platform: string;
   url: string;
@@ -90,6 +91,11 @@ export function EditPersonClient({
   const [description, setDescription] = useState(
     initialPerson?.description || "",
   );
+  const [gender, setGender] = useState(initialPerson?.gender || "female");
+  const [isNsfw, setIsNsfw] = useState(initialPerson?.isNsfw || false);
+  const [activities, setActivities] = useState<string[]>(
+    initialPerson?.activities || [],
+  );
   const [calendarMonth, setCalendarMonth] = useState<Date>(
     initialPerson?.birthDate ? new Date(initialPerson.birthDate) : new Date(),
   );
@@ -100,7 +106,10 @@ export function EditPersonClient({
     initialPerson?.websites || [],
   );
   const [closePersons, setClosePersons] = useState<ClosePersonItem[]>(
-    initialPerson?.closePersons || [],
+    initialPerson?.closePersons?.map((cp: any) => ({
+      ...cp,
+      label: cp.label || "",
+    })) || [],
   );
 
   useEffect(() => {
@@ -228,6 +237,7 @@ export function EditPersonClient({
       ...closePersons,
       {
         id: crypto.randomUUID(),
+        label: "",
         relation: "",
         platform: socialPlatforms[0] || "Instagram",
         url: "",
@@ -235,7 +245,7 @@ export function EditPersonClient({
     ]);
   const updateClosePerson = (
     id: string,
-    field: "relation" | "platform" | "url",
+    field: "label" | "relation" | "platform" | "url",
     value: string,
   ) =>
     setClosePersons(
@@ -256,6 +266,9 @@ export function EditPersonClient({
     const payload = {
       fullName,
       nickname,
+      gender,
+      isNsfw,
+      activities,
       birthDate: birthDate ? birthDate.toISOString() : undefined,
       birthPlace,
       description,
@@ -478,6 +491,88 @@ export function EditPersonClient({
                   </PopoverContent>
                 </Popover>
               </div>
+            </div>
+
+            {/* Gender & NSFW */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-foreground">
+                  Jenis Kelamin
+                </label>
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                  className="w-full h-9 px-2.5 text-sm rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                >
+                  <option value="female">Perempuan</option>
+                  <option value="male">Laki-laki</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-foreground">
+                  Konten 18+ (NSFW)
+                </label>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={isNsfw}
+                  onClick={() => setIsNsfw(!isNsfw)}
+                  className={`relative w-14 h-7 rounded-full transition-colors cursor-pointer ${
+                    isNsfw ? "bg-destructive" : "bg-muted border border-border"
+                  }`}
+                >
+                  <span
+                    className={`absolute top-0.5 left-0.5 w-6 h-6 rounded-full bg-white shadow transition-transform ${
+                      isNsfw ? "translate-x-7" : ""
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+
+            {/* Aktifitas / Riwayat Hidup */}
+            <div className="space-y-2 pt-2">
+              <label className="text-xs font-medium text-foreground">
+                Aktifitas / Riwayat Hidup
+              </label>
+              <div className="flex flex-wrap gap-1.5 mb-2">
+                {activities.map((act, idx) => (
+                  <span
+                    key={`${act}-${idx}`}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-muted border border-border"
+                  >
+                    {act}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setActivities(activities.filter((_, i) => i !== idx))
+                      }
+                      className="hover:text-destructive cursor-pointer"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  placeholder="ex: SMA Negeri 1 Jakarta (2015-2018)"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const v = e.currentTarget.value.trim();
+                      if (v) setActivities([...activities, v]);
+                      e.currentTarget.value = "";
+                    }
+                  }}
+                  className="max-w-xs h-8 text-xs"
+                />
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                Tekan Enter untuk menambahkan.
+              </p>
             </div>
 
             {/* Tags */}
@@ -735,11 +830,24 @@ export function EditPersonClient({
                     key={item.id}
                     className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center bg-muted/30 p-2.5 rounded-lg border border-border/60"
                   >
-                    {/* Status / Hubungan */}
+                    {/* Label (Nama) */}
                     <div className="sm:col-span-3">
                       <Input
                         type="text"
-                        placeholder="Hubungan (ex: Kakak, Manajer)"
+                        placeholder="Nama Relasi"
+                        value={item.label || ""}
+                        onChange={(e) =>
+                          updateClosePerson(item.id, "label", e.target.value)
+                        }
+                        className="h-9 text-xs bg-background"
+                      />
+                    </div>
+
+                    {/* Status / Hubungan */}
+                    <div className="sm:col-span-2">
+                      <Input
+                        type="text"
+                        placeholder="Hubungan (ex: Kakak)"
                         value={item.relation}
                         onChange={(e) =>
                           updateClosePerson(item.id, "relation", e.target.value)
@@ -755,7 +863,7 @@ export function EditPersonClient({
                         onChange={(e) =>
                           updateClosePerson(item.id, "platform", e.target.value)
                         }
-                        className="w-full h-9 px-2.5 text-xs font-medium rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        className="w-full h-9 px-2.5 text-xs font-medium rounded-lg border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary/20 shrink"
                       >
                         {socialPlatforms.map((plat) => (
                           <option key={plat} value={plat}>
@@ -766,7 +874,7 @@ export function EditPersonClient({
                     </div>
 
                     {/* Tautan Profil */}
-                    <div className="sm:col-span-5">
+                    <div className="sm:col-span-3">
                       <Input
                         type="url"
                         placeholder="Link Sosmed (https://...)"

@@ -22,6 +22,9 @@ interface AddPeopleModalProps {
 export function AddPeopleModal({ isOpen, onClose }: AddPeopleModalProps) {
   const router = useRouter();
   const [name, setName] = useState("");
+  const [gender, setGender] = useState("female");
+  const [activities, setActivities] = useState<string[]>([]);
+  const [isNsfw, setIsNsfw] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [fileToUpload, setFileToUpload] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -47,7 +50,7 @@ export function AddPeopleModal({ isOpen, onClose }: AddPeopleModalProps) {
       const res = await fetch(`${API_URL}/peoples`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ fullName: name }),
+        body: JSON.stringify({ fullName: name, gender, activities, isNsfw }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -132,18 +135,51 @@ export function AddPeopleModal({ isOpen, onClose }: AddPeopleModalProps) {
             </div>
           </div>
 
-          {/* Input Nama People */}
-          <div className="space-y-2">
-            <label className="block text-xs font-medium text-foreground">
-              Full Name
+          {/* Gender */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-foreground">
+              Gender
             </label>
-            <Input
+            <select
+              value={gender}
+              onChange={(e) => setGender(e.target.value)}
+              className="h-9 w-full rounded-lg border border-border bg-background text-sm"
+            >
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          {/* Activities */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-foreground">
+              Activities (comma separated)
+            </label>
+            <input
               type="text"
-              required
-              placeholder="Ex: Ichsanul Kamil Sudarmi"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="h-10 rounded-lg bg-background border-border focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary transition-all text-sm"
+              value={activities.join(", ")}
+              onChange={(e) =>
+                setActivities(
+                  e.target.value
+                    .split(",")
+                    .map((a) => a.trim())
+                    .filter((a) => a),
+                )
+              }
+              placeholder="e.g. Education, Career"
+              className="h-9 w-full rounded-lg border border-border bg-background text-sm"
+            />
+          </div>
+          {/* NSFW */}
+          <div className="flex items-center space-x-2">
+            <label className="text-xs font-medium text-foreground">
+              18+ (NSFW)
+            </label>
+            <input
+              type="checkbox"
+              checked={isNsfw}
+              onChange={(e) => setIsNsfw(e.target.checked)}
+              className="h-4 w-4"
             />
           </div>
 

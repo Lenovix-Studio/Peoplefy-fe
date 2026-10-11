@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -83,6 +83,10 @@ export default function PackContentDetailPageClient({
   const [activeTab, setActiveTab] = useState<"photo" | "video">("photo");
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [scale, setScale] = useState<number>(1);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0 });
+  const isDraggingRef = useRef(false);
 
   const filteredItems = useMemo(() => {
     return pack.items.filter((item) =>
@@ -211,7 +215,10 @@ export default function PackContentDetailPageClient({
     );
   };
 
-  const handleResetZoom = () => setScale(1);
+  const handleResetZoom = () => {
+    setScale(1);
+    setPosition({ x: 0, y: 0 });
+  };
 
   const handleNext = () => {
     showNext();
@@ -224,15 +231,10 @@ export default function PackContentDetailPageClient({
   };
 
   useEffect(() => {
-    if (
-      selectedIndex === null ||
-      filteredItems[selectedIndex]?.type !== "image"
-    )
-      return;
+    if (selectedIndex === null) return;
 
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
-
       setScale((prevScale) => {
         const zoomStep = 0.1;
         let newScale = prevScale + (e.deltaY < 0 ? zoomStep : -zoomStep);
@@ -248,7 +250,49 @@ export default function PackContentDetailPageClient({
     return () => {
       if (viewerArea) viewerArea.removeEventListener("wheel", handleWheel);
     };
-  }, [selectedIndex, filteredItems]);
+  }, [selectedIndex]);
+
+  useEffect(() => {
+    if (selectedIndex === null) return;
+
+    const viewerArea = document.getElementById("media-viewer-content");
+    if (!viewerArea) return;
+
+    const handlePointerDown = (e: PointerEvent) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      e.stopPropagation();
+      isDraggingRef.current = true;
+      setIsDragging(true);
+      dragStartRef.current = { x: e.clientX, y: e.clientY };
+    };
+
+    const handlePointerMove = (e: PointerEvent) => {
+      if (!isDraggingRef.current) return;
+      const dx = e.clientX - dragStartRef.current.x;
+      const dy = e.clientY - dragStartRef.current.y;
+      dragStartRef.current = { x: e.clientX, y: e.clientY };
+      setPosition((prev) => ({
+        x: Math.max(-400, Math.min(400, prev.x + dx)),
+        y: Math.max(-400, Math.min(400, prev.y + dy)),
+      }));
+    };
+
+    const handlePointerUp = () => {
+      isDraggingRef.current = false;
+      setIsDragging(false);
+    };
+
+    viewerArea.addEventListener("pointerdown", handlePointerDown);
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp);
+
+    return () => {
+      viewerArea.removeEventListener("pointerdown", handlePointerDown);
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+  }, [selectedIndex]);
 
   useEffect(() => {
     if (selectedIndex === null) return;
@@ -653,15 +697,21 @@ export default function PackContentDetailPageClient({
 
             <div
               id="media-viewer-content"
-              className="w-full h-full flex items-center justify-center p-2 relative overflow-auto scrollbar-none"
+              className="w-full h-full flex items-center justify-center p-2 relative overflow-auto scrollbar-none select-none"
+              style={{ touchAction: "none" }}
             >
               {filteredItems[selectedIndex].type === "image" ? (
                 <div className="flex items-center justify-center m-auto">
                   <img
                     src={filteredItems[selectedIndex].url}
                     alt={filteredItems[selectedIndex].title}
-                    style={{ transform: `scale(${scale})` }}
-                    className="max-w-full max-h-[75vh] object-contain rounded-lg shadow-2xl select-none origin-center transition-transform duration-100 ease-out"
+                    draggable={false}
+                    style={{
+                      transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+                    }}
+                    className={`max-w-full max-h-[75vh] object-contain rounded-lg shadow-2xl select-none origin-center transition-transform duration-100 ease-out ${
+                      isDragging ? "cursor-grabbing" : "cursor-grab"
+                    }`}
                   />
                 </div>
               ) : (
@@ -670,6 +720,10 @@ export default function PackContentDetailPageClient({
                   controls
                   autoPlay
                   playsInline
+                  draggable={false}
+                  style={{
+                    transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+                  }}
                   className="max-w-full max-h-[75vh] object-contain rounded-lg shadow-2xl bg-zinc-950"
                 />
               )}

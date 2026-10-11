@@ -25,6 +25,7 @@ import {
   MapPin,
   Users,
   Video,
+  User,
 } from "lucide-react";
 import {
   FaInstagram,
@@ -267,7 +268,7 @@ export function PersonDetailClient({ initialPerson }: { initialPerson: any }) {
       />
 
       <main className="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
-        <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-xs select-none">
+        <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-xs">
           {/* 1. Cover / Banner Section */}
           {(() => {
             const bannerSrc =
@@ -404,6 +405,43 @@ export function PersonDetailClient({ initialPerson }: { initialPerson: any }) {
                 </p>
               )}
 
+              {(personDetail.gender || personDetail.isNsfw) && (
+                <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground font-medium">
+                  {personDetail.gender && (
+                    <div className="flex items-center gap-1.5">
+                      <User className="w-3.5 h-3.5 text-primary shrink-0" />
+                      <span className="capitalize">{personDetail.gender}</span>
+                    </div>
+                  )}
+                  {personDetail.isNsfw && (
+                    <span className="px-2 py-0.5 rounded-md bg-destructive/10 text-destructive border border-destructive/20 text-[11px] font-semibold">
+                      18+
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {personDetail.activities &&
+                personDetail.activities.length > 0 && (
+                  <div className="space-y-1.5">
+                    <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block">
+                      Aktifitas / Riwayat Hidup
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {personDetail.activities.map(
+                        (act: string, idx: number) => (
+                          <span
+                            key={`${act}-${idx}`}
+                            className="text-[11px] font-medium px-2.5 py-1 rounded-lg bg-muted border border-border/60 text-foreground"
+                          >
+                            {act}
+                          </span>
+                        ),
+                      )}
+                    </div>
+                  </div>
+                )}
+
               <div className="pt-1 flex flex-wrap gap-2.5 text-xs font-medium">
                 <div className="flex items-center gap-1.5 bg-muted/60 border border-border/40 px-3 py-1.5 rounded-xl text-muted-foreground">
                   <FolderHeart className="w-4 h-4 text-primary shrink-0" />
@@ -471,8 +509,13 @@ export function PersonDetailClient({ initialPerson }: { initialPerson: any }) {
                             className="inline-flex items-center gap-2 border border-border/80 bg-muted/40 px-3 py-1.5 rounded-xl text-xs"
                           >
                             <Users className="w-3.5 h-3.5 text-primary shrink-0" />
-                            <span className="font-semibold text-foreground">
-                              {person.relation || "Relasi"}:
+                            {person.label && (
+                              <span className="font-bold text-foreground">
+                                {person.label}
+                              </span>
+                            )}
+                            <span className="font-semibold text-muted-foreground">
+                              ({person.relation || "Relasi"}):
                             </span>
                             <a
                               href={person.url}
