@@ -22,7 +22,7 @@ import {
   SelectItem,
   SelectContent,
 } from "@/components/ui/select";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 export function ContentsClient({
   initialContents,
@@ -32,7 +32,12 @@ export function ContentsClient({
   const [searchQuery, setSearchQuery] = useState("");
   const [sortValue, setSortValue] = useState<string | null>("terbaru");
   const [currentPage, setCurrentPage] = useState(1);
+  const [mounted, setMounted] = useState(false);
   const ITEMS_PER_PAGE = 8;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const filteredContents = useMemo(() => {
     let result = [...initialContents];
@@ -222,7 +227,9 @@ export function ContentsClient({
 
                 <CardFooter className="px-4 pb-4 pt-2 border-t border-border flex items-center justify-between text-[11px] text-muted-foreground">
                   <span>
-                    {new Date(content.createdAt).toLocaleDateString()}
+                    {mounted
+                      ? new Date(content.createdAt).toLocaleDateString()
+                      : ""}
                   </span>
                   <span className="font-medium text-primary opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-2 group-hover:translate-x-0 flex items-center gap-1">
                     Lihat Detail <ArrowRight className="w-3 h-3" />

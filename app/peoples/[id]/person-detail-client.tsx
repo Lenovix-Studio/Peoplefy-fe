@@ -96,7 +96,7 @@ export function PersonDetailClient({ initialPerson }: { initialPerson: any }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const ITEMS_PER_PAGE = 5;
+  const ITEMS_PER_PAGE = 8;
 
   const handleDelete = async () => {
     const tid = toast.loading("Menghapus...");
