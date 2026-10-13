@@ -54,7 +54,8 @@ export function ContentsClient({
     if (sortValue === "terbaru") {
       result.sort(
         (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+          new Date(b.updatedAt ?? b.createdAt).getTime() -
+          new Date(a.updatedAt ?? a.createdAt).getTime(),
       );
     } else if (sortValue === "populer") {
       result.sort(

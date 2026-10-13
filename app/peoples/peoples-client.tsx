@@ -24,7 +24,11 @@ import { Header } from "@/components/header";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-export function PeoplesClient({ initialPeoples }: { initialPeoples: any[] }) {
+export function PeoplesClient({
+  initialPeoples,
+}: {
+  initialPeoples: unknown[];
+}) {
   const [sortValue, setSortValue] = useState<string | null>("paling-banyak");
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -38,7 +42,7 @@ export function PeoplesClient({ initialPeoples }: { initialPeoples: any[] }) {
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter(
-        (p) =>
+        (p: any) =>
           p.fullName?.toLowerCase().includes(q) ||
           p.nickname?.toLowerCase().includes(q),
       );
@@ -46,15 +50,18 @@ export function PeoplesClient({ initialPeoples }: { initialPeoples: any[] }) {
 
     // Sort
     if (sortValue === "paling-banyak") {
-      result.sort((a, b) => (b.packCount || 0) - (a.packCount || 0));
+      result.sort((a: any, b: any) => (b.packCount || 0) - (a.packCount || 0));
     } else if (sortValue === "paling-sedikit") {
-      result.sort((a, b) => (a.packCount || 0) - (b.packCount || 0));
+      result.sort((a: any, b: any) => (a.packCount || 0) - (b.packCount || 0));
     } else if (sortValue === "az") {
-      result.sort((a, b) => (a.fullName || "").localeCompare(b.fullName || ""));
+      result.sort((a: any, b: any) =>
+        (a.fullName || "").localeCompare(b.fullName || ""),
+      );
     } else if (sortValue === "terbaru") {
       result.sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+        (a: any, b: any) =>
+          new Date(b.updatedAt ?? b.createdAt).getTime() -
+          new Date(a.updatedAt ?? a.createdAt).getTime(),
       );
     }
 
@@ -185,7 +192,7 @@ export function PeoplesClient({ initialPeoples }: { initialPeoples: any[] }) {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {paginatedPeoples.map((person) => (
+            {paginatedPeoples.map((person: any) => (
               <div
                 key={person.id}
                 className="group relative rounded-xl border border-border bg-card overflow-hidden hover:shadow-md hover:border-primary/20 transition-all flex flex-col justify-between select-none"
