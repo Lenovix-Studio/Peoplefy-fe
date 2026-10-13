@@ -97,7 +97,6 @@ export function AddPeopleModal({ isOpen, onClose }: AddPeopleModalProps) {
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Input Upload Foto Profil */}
           <div className="space-y-2">
             <div className="flex flex-col items-center justify-center pt-1">
               <div
@@ -134,7 +133,20 @@ export function AddPeopleModal({ isOpen, onClose }: AddPeopleModalProps) {
               />
             </div>
           </div>
-
+          {/* Input Nama Lengkap */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-foreground">
+              Nama Lengkap <span className="text-destructive">*</span>
+            </label>
+            <input
+              type="text"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Contoh: Anya Geraldine"
+              className="h-9 w-full rounded-lg border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
           {/* Gender */}
           <div className="space-y-1.5">
             <label className="text-xs font-medium text-foreground">
