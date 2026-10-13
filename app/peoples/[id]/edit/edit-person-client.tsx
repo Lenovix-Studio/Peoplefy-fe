@@ -66,6 +66,7 @@ export function EditPersonClient({
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [fullName, setFullName] = useState(initialPerson?.fullName || "");
+  const [email, setEmail] = useState(initialPerson?.email || "");
   const [nickname, setNickname] = useState(initialPerson?.nickname || "");
   const [birthPlace, setBirthPlace] = useState(initialPerson?.birthPlace || "");
   const [tags, setTags] = useState<string[]>(initialPerson?.tags || []);
@@ -266,6 +267,7 @@ export function EditPersonClient({
     const payload = {
       fullName,
       nickname,
+      email,
       gender,
       isNsfw,
       activities,
@@ -435,6 +437,18 @@ export function EditPersonClient({
                   value={nickname}
                   onChange={(e) => setNickname(e.target.value)}
                   placeholder="Contoh: Mimi"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-foreground">
+                  Email
+                </label>
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Contoh: email@example.com"
                 />
               </div>
 

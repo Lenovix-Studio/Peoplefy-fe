@@ -80,7 +80,19 @@ export default function PackContentDetailPageClient({
     null,
   );
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"photo" | "video">("photo");
+  const photoCount = pack.items.filter((i) => i.type === "image").length;
+  const videoCount = pack.items.filter((i) => i.type === "video").length;
+
+  const [activeTab, setActiveTab] = useState<"photo" | "video">(
+    photoCount > 0 ? "photo" : videoCount > 0 ? "video" : "photo",
+  );
+
+  useEffect(() => {
+    if (activeTab === "photo" && photoCount === 0 && videoCount > 0)
+      setActiveTab("video");
+    if (activeTab === "video" && videoCount === 0 && photoCount > 0)
+      setActiveTab("photo");
+  }, [photoCount, videoCount, activeTab]);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [scale, setScale] = useState<number>(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -93,9 +105,6 @@ export default function PackContentDetailPageClient({
       activeTab === "photo" ? item.type === "image" : item.type === "video",
     );
   }, [pack.items, activeTab]);
-
-  const photoCount = pack.items.filter((i) => i.type === "image").length;
-  const videoCount = pack.items.filter((i) => i.type === "video").length;
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -482,29 +491,33 @@ export default function PackContentDetailPageClient({
         {/* Tab Navigation: Foto vs Video */}
         <div className="border-b border-border flex items-center justify-between gap-4 text-sm font-medium w-full">
           <div className="flex gap-6">
-            <button
-              onClick={() => setActiveTab("photo")}
-              className={`pb-3 -mb-px border-b-2 transition-colors flex items-center gap-2 cursor-pointer ${
-                activeTab === "photo"
-                  ? "border-primary text-primary font-semibold"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Camera className="w-4 h-4" />
-              <span className="capitalize">Photo ({photoCount})</span>
-            </button>
+            {photoCount > 0 && (
+              <button
+                onClick={() => setActiveTab("photo")}
+                className={`pb-3 -mb-px border-b-2 transition-colors flex items-center gap-2 cursor-pointer ${
+                  activeTab === "photo"
+                    ? "border-primary text-primary font-semibold"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Camera className="w-4 h-4" />
+                <span className="capitalize">Photo ({photoCount})</span>
+              </button>
+            )}
 
-            <button
-              onClick={() => setActiveTab("video")}
-              className={`pb-3 -mb-px border-b-2 transition-colors flex items-center gap-2 cursor-pointer ${
-                activeTab === "video"
-                  ? "border-primary text-primary font-semibold"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Video className="w-4 h-4" />
-              <span className="capitalize">Video ({videoCount})</span>
-            </button>
+            {videoCount > 0 && (
+              <button
+                onClick={() => setActiveTab("video")}
+                className={`pb-3 -mb-px border-b-2 transition-colors flex items-center gap-2 cursor-pointer ${
+                  activeTab === "video"
+                    ? "border-primary text-primary font-semibold"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Video className="w-4 h-4" />
+                <span className="capitalize">Video ({videoCount})</span>
+              </button>
+            )}
           </div>
         </div>
 

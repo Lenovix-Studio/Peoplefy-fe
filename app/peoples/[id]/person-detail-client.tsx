@@ -21,7 +21,6 @@ import {
   ChevronRight,
   MoreHorizontal,
   X,
-  Share2,
   MapPin,
   Users,
   Video,
@@ -73,18 +72,7 @@ function getSocialIcon(platform: string) {
     return <FaTwitch className="w-3.5 h-3.5 text-purple-500" />;
   if (p.includes("discord"))
     return <FaDiscord className="w-3.5 h-3.5 text-indigo-500" />;
-  return <Share2 className="w-3.5 h-3.5 text-muted-foreground" />;
-}
-
-function formatDisplayUrl(url: string) {
-  try {
-    const parsed = new URL(url);
-    return (
-      parsed.hostname.replace("www.", "") + parsed.pathname.replace(/\/$/, "")
-    );
-  } catch {
-    return url.replace(/^https?:\/\/(www\.)?/, "").replace(/\/$/, "");
-  }
+  return <Globe className="w-3.5 h-3.5 text-muted-foreground" />;
 }
 
 export function PersonDetailClient({ initialPerson }: { initialPerson: any }) {
@@ -92,11 +80,10 @@ export function PersonDetailClient({ initialPerson }: { initialPerson: any }) {
   const router = useRouter();
   const personId = params.id as string;
 
-  const [personDetail, setPersonDetail] = useState<any>(initialPerson);
+  const personDetail = initialPerson;
   const [activeTab, setActiveTab] = useState<"packs">("packs");
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const ITEMS_PER_PAGE = 8;
 
   const handleDelete = async () => {
@@ -177,16 +164,6 @@ export function PersonDetailClient({ initialPerson }: { initialPerson: any }) {
 
     return pages;
   };
-
-  if (isLoading) {
-    return (
-      <div className="flex flex-col min-h-screen items-center justify-center">
-        <span className="animate-pulse text-muted-foreground">
-          Loading Profile...
-        </span>
-      </div>
-    );
-  }
 
   if (!personDetail) {
     return (
@@ -284,12 +261,23 @@ export function PersonDetailClient({ initialPerson }: { initialPerson: any }) {
             return (
               <div className="relative h-48 md:h-64 bg-muted overflow-hidden flex items-center justify-center">
                 {bannerSrc ? (
-                  <img
-                    src={bannerSrc}
-                    alt={`${bannerName} banner`}
-                    loading="lazy"
-                    className="w-full h-full object-cover transition-transform duration-700 hover:scale-102"
-                  />
+                  <Dialog>
+                    <DialogTrigger>
+                      <img
+                        src={bannerSrc}
+                        alt={`${bannerName} banner`}
+                        loading="lazy"
+                        className="w-full h-full object-cover transition-transform duration-700 hover:scale-102 cursor-zoom-in"
+                      />
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl p-0 overflow-hidden border-none bg-transparent shadow-none">
+                      <img
+                        src={bannerSrc}
+                        alt="Preview"
+                        className="w-full h-full object-contain"
+                      />
+                    </DialogContent>
+                  </Dialog>
                 ) : (
                   <div className="w-full h-full bg-linear-to-r from-primary/10 via-muted to-primary/5 flex items-center justify-center" />
                 )}
@@ -315,11 +303,22 @@ export function PersonDetailClient({ initialPerson }: { initialPerson: any }) {
               return (
                 <div className="flex flex-col sm:flex-row sm:items-end justify-between -mt-16 sm:-mt-20 gap-4 mb-5">
                   <div className="relative shrink-0 w-28 h-28 sm:w-36 sm:h-36 rounded-full border-4 border-card bg-muted shadow-md overflow-hidden flex items-center justify-center">
-                    <img
-                      src={avatarSrc}
-                      alt={avatarName}
-                      className="w-full h-full object-cover"
-                    />
+                    <Dialog>
+                      <DialogTrigger className="w-full h-full">
+                        <img
+                          src={avatarSrc}
+                          alt={avatarName}
+                          className="w-full h-full object-cover cursor-zoom-in"
+                        />
+                      </DialogTrigger>
+                      <DialogContent className="max-w-xl p-0 overflow-hidden border-none bg-transparent shadow-none">
+                        <img
+                          src={avatarSrc}
+                          alt="Preview"
+                          className="w-full h-full object-contain"
+                        />
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </div>
               );
@@ -351,6 +350,11 @@ export function PersonDetailClient({ initialPerson }: { initialPerson: any }) {
                   )}
                 </div>
 
+                {personDetail.email && (
+                  <div className="text-xs text-muted-foreground font-medium pt-1">
+                    Email: {personDetail.email}
+                  </div>
+                )}
                 {personDetail.tags && personDetail.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 pt-0.5">
                     {personDetail.tags.map((tag: string) => (
