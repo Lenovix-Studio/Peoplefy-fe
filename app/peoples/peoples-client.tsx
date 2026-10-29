@@ -198,6 +198,13 @@ export function PeoplesClient({
                 className="group relative rounded-xl border border-border bg-card overflow-hidden hover:shadow-md hover:border-primary/20 transition-all flex flex-col justify-between select-none"
               >
                 <div className="relative aspect-4/3.5 w-full overflow-hidden bg-muted border-b border-border">
+                  {person.isNsfw && (
+                    <div className="absolute top-3 left-3 z-30">
+                      <span className="bg-destructive text-destructive-foreground text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm">
+                        18+
+                      </span>
+                    </div>
+                  )}
                   <img
                     src={
                       person.avatarUrl ||

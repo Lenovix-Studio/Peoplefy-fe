@@ -87,8 +87,15 @@ export function EditPersonClient({
     initialPresetTagsTypeId || "",
   );
   const [birthDate, setBirthDate] = useState<Date | undefined>(
-    initialPerson?.birthDate ? new Date(initialPerson.birthDate) : undefined,
+    initialPerson?.birthDate
+      ? (() => {
+          const d = new Date(initialPerson.birthDate);
+          return !isNaN(d.getTime()) ? d : undefined;
+        })()
+      : undefined,
   );
+  const safeBirthDate =
+    birthDate && !isNaN(birthDate.getTime()) ? birthDate : undefined;
   const [description, setDescription] = useState(
     initialPerson?.description || "",
   );
@@ -479,8 +486,10 @@ export function EditPersonClient({
                       )}
                     >
                       <CalendarIcon className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
-                      {birthDate ? (
-                        format(birthDate, "d MMMM yyyy", { locale: localeId })
+                      {safeBirthDate ? (
+                        format(safeBirthDate, "d MMMM yyyy", {
+                          locale: localeId,
+                        })
                       ) : (
                         <span>Pilih tanggal lahir</span>
                       )}

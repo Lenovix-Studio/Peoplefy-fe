@@ -50,6 +50,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { PhotoModal } from "@/components/ui/photo-modal";
 import { API_URL } from "@/constant/variable";
 
 function getSocialIcon(platform: string) {
@@ -262,26 +263,20 @@ export function PersonDetailClient({ initialPerson }: { initialPerson: any }) {
               <div className="relative h-48 md:h-64 bg-muted overflow-hidden flex items-center justify-center">
                 {bannerSrc ? (
                   <Dialog>
-                    <DialogTrigger>
-                      <img
-                        src={bannerSrc}
-                        alt={`${bannerName} banner`}
-                        loading="lazy"
-                        className="w-full h-full object-cover transition-transform duration-700 hover:scale-102 cursor-zoom-in"
-                      />
-                    </DialogTrigger>
-                    <DialogContent className="max-w-4xl p-0 overflow-hidden border-none bg-transparent shadow-none">
-                      <img
-                        src={bannerSrc}
-                        alt="Preview"
-                        className="w-full h-full object-contain"
-                      />
-                    </DialogContent>
+                    <PhotoModal src={bannerSrc} alt="Preview">
+                      {bannerSrc && (
+                        <img
+                          src={bannerSrc}
+                          alt={`${bannerName} banner`}
+                          className="w-full h-full object-cover transition-transform duration-700 hover:scale-102 cursor-zoom-in"
+                        />
+                      )}
+                    </PhotoModal>
                   </Dialog>
                 ) : (
                   <div className="w-full h-full bg-linear-to-r from-primary/10 via-muted to-primary/5 flex items-center justify-center" />
                 )}
-                <div className="absolute inset-0 bg-linear-to-t from-black/30 via-transparent to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-linear-to-t from-black/30 via-transparent to-transparent pointer-events-none z-10" />
               </div>
             );
           })()}
@@ -301,24 +296,17 @@ export function PersonDetailClient({ initialPerson }: { initialPerson: any }) {
                 personDetail.fullName || personDetail.name || "Avatar";
 
               return (
-                <div className="flex flex-col sm:flex-row sm:items-end justify-between -mt-16 sm:-mt-20 gap-4 mb-5">
+                <div className="flex flex-col sm:flex-row sm:items-end justify-between -mt-16 sm:-mt-20 gap-4 mb-5 w-fit">
                   <div className="relative shrink-0 w-28 h-28 sm:w-36 sm:h-36 rounded-full border-4 border-card bg-muted shadow-md overflow-hidden flex items-center justify-center">
-                    <Dialog>
-                      <DialogTrigger className="w-full h-full">
+                    <PhotoModal src={avatarSrc} alt={avatarName}>
+                      {avatarSrc && (
                         <img
                           src={avatarSrc}
                           alt={avatarName}
                           className="w-full h-full object-cover cursor-zoom-in"
                         />
-                      </DialogTrigger>
-                      <DialogContent className="max-w-xl p-0 overflow-hidden border-none bg-transparent shadow-none">
-                        <img
-                          src={avatarSrc}
-                          alt="Preview"
-                          className="w-full h-full object-contain"
-                        />
-                      </DialogContent>
-                    </Dialog>
+                      )}
+                    </PhotoModal>
                   </div>
                 </div>
               );
@@ -378,28 +366,29 @@ export function PersonDetailClient({ initialPerson }: { initialPerson: any }) {
                     </div>
                   )}
 
-                  {personDetail.birthDate && (
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
-                      <span>
-                        {format(
-                          new Date(personDetail.birthDate),
-                          "d MMMM yyyy",
-                          {
-                            locale: localeId,
-                          },
-                        )}{" "}
-                        <span className="text-muted-foreground/75 font-normal">
-                          (
-                          {differenceInYears(
-                            new Date(),
+                  {personDetail.birthDate &&
+                    !isNaN(new Date(personDetail.birthDate).getTime()) && (
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
+                        <span>
+                          {format(
                             new Date(personDetail.birthDate),
+                            "d MMMM yyyy",
+                            {
+                              locale: localeId,
+                            },
                           )}{" "}
-                          tahun)
+                          <span className="text-muted-foreground/75 font-normal">
+                            (
+                            {differenceInYears(
+                              new Date(),
+                              new Date(personDetail.birthDate),
+                            )}{" "}
+                            tahun)
+                          </span>
                         </span>
-                      </span>
-                    </div>
-                  )}
+                      </div>
+                    )}
                 </div>
               )}
 
