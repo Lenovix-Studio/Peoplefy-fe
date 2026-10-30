@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { format, differenceInYears } from "date-fns";
+import { format, differenceInYears, parse, isValid } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -366,29 +366,32 @@ export function PersonDetailClient({ initialPerson }: { initialPerson: any }) {
                     </div>
                   )}
 
-                  {personDetail.birthDate &&
-                    !isNaN(new Date(personDetail.birthDate).getTime()) && (
+                  {(() => {
+                    if (!personDetail.birthDate) return null;
+                    let parsedDate = new Date(personDetail.birthDate);
+                    if (!isValid(parsedDate)) {
+                      parsedDate = parse(
+                        personDetail.birthDate,
+                        "yyyyMMdd",
+                        new Date(),
+                      );
+                    }
+                    if (!isValid(parsedDate)) return null;
+
+                    return (
                       <div className="flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5 text-primary shrink-0" />
                         <span>
-                          {format(
-                            new Date(personDetail.birthDate),
-                            "d MMMM yyyy",
-                            {
-                              locale: localeId,
-                            },
-                          )}{" "}
+                          {format(parsedDate, "d MMMM yyyy", {
+                            locale: localeId,
+                          })}{" "}
                           <span className="text-muted-foreground/75 font-normal">
-                            (
-                            {differenceInYears(
-                              new Date(),
-                              new Date(personDetail.birthDate),
-                            )}{" "}
-                            tahun)
+                            ({differenceInYears(new Date(), parsedDate)} tahun)
                           </span>
                         </span>
                       </div>
-                    )}
+                    );
+                  })()}
                 </div>
               )}
 

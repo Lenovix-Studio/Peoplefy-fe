@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, parse, isValid } from "date-fns";
 import { id as localeId } from "date-fns/locale";
 import {
   Camera,
@@ -86,13 +86,17 @@ export function EditPersonClient({
   const [presetTagsTypeId, setPresetTagsTypeId] = useState<string>(
     initialPresetTagsTypeId || "",
   );
+  const parseInitialDate = (val?: string) => {
+    if (!val) return undefined;
+    let d = new Date(val);
+    if (!isValid(d)) {
+      d = parse(val, "yyyyMMdd", new Date());
+    }
+    return isValid(d) ? d : undefined;
+  };
+
   const [birthDate, setBirthDate] = useState<Date | undefined>(
-    initialPerson?.birthDate
-      ? (() => {
-          const d = new Date(initialPerson.birthDate);
-          return !isNaN(d.getTime()) ? d : undefined;
-        })()
-      : undefined,
+    parseInitialDate(initialPerson?.birthDate),
   );
   const safeBirthDate =
     birthDate && !isNaN(birthDate.getTime()) ? birthDate : undefined;
@@ -105,7 +109,7 @@ export function EditPersonClient({
     initialPerson?.activities || [],
   );
   const [calendarMonth, setCalendarMonth] = useState<Date>(
-    initialPerson?.birthDate ? new Date(initialPerson.birthDate) : new Date(),
+    parseInitialDate(initialPerson?.birthDate) || new Date(),
   );
   const [socials, setSocials] = useState<SocialItem[]>(
     initialPerson?.socials || [],
@@ -278,7 +282,7 @@ export function EditPersonClient({
       gender,
       isNsfw,
       activities,
-      birthDate: birthDate ? birthDate.toISOString() : undefined,
+      birthDate: birthDate ? format(birthDate, "yyyyMMdd") : undefined,
       birthPlace,
       description,
       tags,
