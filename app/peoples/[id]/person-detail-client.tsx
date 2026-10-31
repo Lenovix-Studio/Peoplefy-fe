@@ -511,18 +511,21 @@ export function PersonDetailClient({ initialPerson }: { initialPerson: any }) {
                               </span>
                             )}
                             <span className="font-semibold text-muted-foreground">
-                              ({person.relation || "Relasi"}):
+                              ({person.relation || "Relasi"})
+                              {person.url ? ":" : ""}
                             </span>
-                            <a
-                              href={person.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="inline-flex items-center gap-1 text-primary hover:underline font-medium"
-                            >
-                              {getSocialIcon(person.platform)}
-                              <span>{person.platform}</span>
-                              <ExternalLink className="w-2.5 h-2.5 opacity-70" />
-                            </a>
+                            {person.url && (
+                              <a
+                                href={person.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="inline-flex items-center gap-1 text-primary hover:underline font-medium"
+                              >
+                                {getSocialIcon(person.platform)}
+                                <span>{person.platform}</span>
+                                <ExternalLink className="w-2.5 h-2.5 opacity-70" />
+                              </a>
+                            )}
                           </div>
                         ))}
                       </div>
