@@ -512,7 +512,6 @@ export function PersonDetailClient({ initialPerson }: { initialPerson: any }) {
                             )}
                             <span className="font-semibold text-muted-foreground">
                               ({person.relation || "Relasi"})
-                              {person.url ? ":" : ""}
                             </span>
                             {person.url && (
                               <a
