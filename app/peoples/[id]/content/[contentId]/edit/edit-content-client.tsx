@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Header } from "@/components/header";
 import { API_URL } from "@/constant/variable";
 import { ensureCompatibleImage } from "@/lib/image-utils";
+import { uploadWithProgress } from "@/lib/upload-utils";
 
 interface MediaItem {
   id: string;
@@ -60,6 +61,7 @@ export function EditContentClient({
     })) || [],
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [conversionProgress, setConversionProgress] = useState<{
     total: number;
     current: number;
@@ -157,6 +159,7 @@ export function EditContentClient({
     }
 
     setIsSubmitting(true);
+    setUploadProgress(0);
 
     const formData = new FormData();
     formData.append("title", title.trim());
@@ -182,12 +185,11 @@ export function EditContentClient({
     });
 
     try {
-      const res = await fetch(
+      const res = await uploadWithProgress(
         `${API_URL}/peoples/${personId}/photopacks/${contentId}`,
-        {
-          method: "PUT",
-          body: formData,
-        },
+        "PUT",
+        formData,
+        (percent) => setUploadProgress(percent),
       );
       if (res.ok) {
         router.push(`/peoples/${personId}/content/${contentId}`);
@@ -199,6 +201,7 @@ export function EditContentClient({
       alert("Terjadi kesalahan");
     } finally {
       setIsSubmitting(false);
+      setUploadProgress(null);
     }
   };
 
@@ -234,11 +237,40 @@ export function EditContentClient({
             className="gap-1.5"
           >
             <Check className="w-4 h-4" />
-            <span>{isSubmitting ? "Menyimpan..." : "Simpan Perubahan"}</span>
+            <span>
+              {isSubmitting
+                ? uploadProgress !== null && uploadProgress < 100
+                  ? `Mengunggah (${uploadProgress}%)...`
+                  : "Menyimpan..."
+                : "Simpan Perubahan"}
+            </span>
           </Button>
         }
       />
       <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Upload Progress Banner */}
+        {isSubmitting && uploadProgress !== null && (
+          <div className="mb-6 p-4 rounded-xl bg-card border border-primary/30 shadow-md space-y-2.5 animate-in fade-in duration-200">
+            <div className="flex justify-between items-center text-xs font-medium">
+              <span className="text-primary flex items-center gap-2">
+                <span className="inline-block w-2.5 h-2.5 rounded-full bg-primary animate-ping" />
+                {uploadProgress < 100
+                  ? `Sedang mengunggah media (${uploadProgress}%)...`
+                  : "Upload selesai, memproses di server..."}
+              </span>
+              <span className="font-semibold text-foreground">
+                {uploadProgress}%
+              </span>
+            </div>
+            <div className="w-full h-2.5 rounded-full bg-muted overflow-hidden">
+              <div
+                className="h-full bg-primary transition-all duration-200 rounded-full"
+                style={{ width: `${uploadProgress}%` }}
+              />
+            </div>
+          </div>
+        )}
+
         <form
           id="edit-content-form"
           onSubmit={handleSubmit}
