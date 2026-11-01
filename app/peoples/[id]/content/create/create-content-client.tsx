@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Header } from "@/components/header";
 import { API_URL } from "@/constant/variable";
+import { ensureCompatibleImage } from "@/lib/image-utils";
 
 interface MediaItem {
   id: string;
@@ -44,6 +45,11 @@ export function CreateContentClient({
   const [externalUrl, setExternalUrl] = useState("");
   const [mediaList, setMediaList] = useState<MediaItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [conversionProgress, setConversionProgress] = useState<{
+    total: number;
+    current: number;
+    percent: number;
+  } | null>(null);
 
   const handleSetCover = (id: string) => {
     setMediaList((prev) =>
@@ -64,11 +70,52 @@ export function CreateContentClient({
     });
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawFiles = e.target.files;
+    if (!rawFiles || rawFiles.length === 0) return;
 
-    const newItems: MediaItem[] = Array.from(files).map((file, idx) => {
+    const fileArray = Array.from(rawFiles);
+    const hasHeic = fileArray.some(
+      (f) =>
+        f.type === "image/heic" ||
+        f.type === "image/heif" ||
+        /\.(heic|heif)$/i.test(f.name),
+    );
+
+    if (hasHeic) {
+      setConversionProgress({
+        total: fileArray.length,
+        current: 0,
+        percent: 0,
+      });
+    }
+
+    const files: File[] = [];
+    for (let i = 0; i < fileArray.length; i++) {
+      const f = fileArray[i];
+      if (hasHeic) {
+        setConversionProgress({
+          total: fileArray.length,
+          current: i + 1,
+          percent: Math.round((i / fileArray.length) * 100),
+        });
+      }
+      const processed = await ensureCompatibleImage(f);
+      files.push(processed);
+      if (hasHeic) {
+        setConversionProgress({
+          total: fileArray.length,
+          current: i + 1,
+          percent: Math.round(((i + 1) / fileArray.length) * 100),
+        });
+      }
+    }
+
+    if (hasHeic) {
+      setConversionProgress(null);
+    }
+
+    const newItems: MediaItem[] = files.map((file, idx) => {
       const isVid = file.type.startsWith("video");
       return {
         id: crypto.randomUUID(),
@@ -259,6 +306,27 @@ export function CreateContentClient({
                 />
               </label>
             </div>
+
+            {conversionProgress && (
+              <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 space-y-2">
+                <div className="flex justify-between items-center text-xs font-medium">
+                  <span className="text-primary flex items-center gap-2">
+                    <span className="inline-block w-2 h-2 rounded-full bg-primary animate-pulse" />
+                    Mengonversi format HEIC/HEIF ke JPG...
+                  </span>
+                  <span className="text-muted-foreground">
+                    {conversionProgress.current}/{conversionProgress.total} (
+                    {conversionProgress.percent}%)
+                  </span>
+                </div>
+                <div className="w-full h-2 rounded-full bg-primary/10 overflow-hidden">
+                  <div
+                    className="h-full bg-primary transition-all duration-300 rounded-full"
+                    style={{ width: `${conversionProgress.percent}%` }}
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Grid Preview Media */}
             {mediaList.length === 0 ? (

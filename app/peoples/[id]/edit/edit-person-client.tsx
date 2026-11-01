@@ -29,6 +29,7 @@ import {
 import { Header } from "@/components/header";
 import { toast } from "sonner";
 import { API_URL } from "@/constant/variable";
+import { ensureCompatibleImage } from "@/lib/image-utils";
 
 interface SocialItem {
   id: string;
@@ -152,18 +153,46 @@ export function EditPersonClient({
     if (date) setCalendarMonth(date);
   };
 
-  const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setCoverFile(file);
-      setCoverUrl(URL.createObjectURL(file));
+  const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawFile = e.target.files?.[0];
+    if (rawFile) {
+      const isHeic =
+        rawFile.type === "image/heic" ||
+        rawFile.type === "image/heif" ||
+        /\.(heic|heif)$/i.test(rawFile.name);
+
+      const tid = isHeic
+        ? toast.loading("Mengonversi foto cover (HEIC ke JPG)...")
+        : null;
+      try {
+        const file = await ensureCompatibleImage(rawFile);
+        setCoverFile(file);
+        setCoverUrl(URL.createObjectURL(file));
+        if (tid) toast.success("Foto cover siap digunakan!", { id: tid });
+      } catch {
+        if (tid) toast.error("Gagal mengonversi foto cover.", { id: tid });
+      }
     }
   };
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setAvatarFile(file);
-      setAvatarUrl(URL.createObjectURL(file));
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const rawFile = e.target.files?.[0];
+    if (rawFile) {
+      const isHeic =
+        rawFile.type === "image/heic" ||
+        rawFile.type === "image/heif" ||
+        /\.(heic|heif)$/i.test(rawFile.name);
+
+      const tid = isHeic
+        ? toast.loading("Mengonversi foto profil (HEIC ke JPG)...")
+        : null;
+      try {
+        const file = await ensureCompatibleImage(rawFile);
+        setAvatarFile(file);
+        setAvatarUrl(URL.createObjectURL(file));
+        if (tid) toast.success("Foto profil siap digunakan!", { id: tid });
+      } catch {
+        if (tid) toast.error("Gagal mengonversi foto profil.", { id: tid });
+      }
     }
   };
 
