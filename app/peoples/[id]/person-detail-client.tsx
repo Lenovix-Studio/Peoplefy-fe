@@ -248,21 +248,21 @@ export function PersonDetailClient({ initialPerson }: { initialPerson: any }) {
       <main className="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
         <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-xs">
           {/* 1. Cover / Banner Section */}
-          {(() => {
-            const bannerSrc =
-              personDetail.coverUrl && personDetail.coverUrl.trim().length > 0
-                ? personDetail.coverUrl
-                : personDetail.banner && personDetail.banner.trim().length > 0
-                  ? personDetail.banner
-                  : null;
+          <div className="relative">
+            {(() => {
+              const bannerSrc =
+                personDetail.coverUrl && personDetail.coverUrl.trim().length > 0
+                  ? personDetail.coverUrl
+                  : personDetail.banner && personDetail.banner.trim().length > 0
+                    ? personDetail.banner
+                    : null;
 
-            const bannerName =
-              personDetail.fullName || personDetail.name || "Person";
+              const bannerName =
+                personDetail.fullName || personDetail.name || "Person";
 
-            return (
-              <div className="relative h-48 md:h-64 bg-muted overflow-hidden flex items-center justify-center">
-                {bannerSrc ? (
-                  <Dialog>
+              return (
+                <div className="relative h-48 md:h-64 bg-muted overflow-hidden flex items-center justify-center">
+                  {bannerSrc ? (
                     <PhotoModal src={bannerSrc} alt="Preview">
                       {bannerSrc && (
                         <img
@@ -272,17 +272,15 @@ export function PersonDetailClient({ initialPerson }: { initialPerson: any }) {
                         />
                       )}
                     </PhotoModal>
-                  </Dialog>
-                ) : (
-                  <div className="w-full h-full bg-linear-to-r from-primary/10 via-muted to-primary/5 flex items-center justify-center" />
-                )}
-                <div className="absolute inset-0 bg-linear-to-t from-black/30 via-transparent to-transparent pointer-events-none z-10" />
-              </div>
-            );
-          })()}
+                  ) : (
+                    <div className="w-full h-full bg-linear-to-r from-primary/10 via-muted to-primary/5 flex items-center justify-center" />
+                  )}
+                  <div className="absolute inset-0 bg-linear-to-t from-black/30 via-transparent to-transparent pointer-events-none z-10" />
+                </div>
+              );
+            })()}
 
-          {/* 2. Profile Content Section */}
-          <div className="px-6 pb-6 relative">
+            {/* Avatar melayang di atas batas banner dan profile content */}
             {(() => {
               const avatarSrc =
                 personDetail.avatarUrl &&
@@ -296,8 +294,8 @@ export function PersonDetailClient({ initialPerson }: { initialPerson: any }) {
                 personDetail.fullName || personDetail.name || "Avatar";
 
               return (
-                <div className="flex flex-col sm:flex-row sm:items-end justify-between -mt-16 sm:-mt-20 gap-4 mb-5 w-fit">
-                  <div className="relative shrink-0 w-28 h-28 sm:w-36 sm:h-36 rounded-full border-4 border-card bg-muted shadow-md overflow-hidden flex items-center justify-center">
+                <div className="absolute left-6 -bottom-14 sm:-bottom-18 z-30 pointer-events-auto">
+                  <div className="relative w-28 h-28 sm:w-36 sm:h-36 rounded-full border-4 border-card bg-muted shadow-md overflow-hidden flex items-center justify-center">
                     <PhotoModal src={avatarSrc} alt={avatarName}>
                       {avatarSrc && (
                         <img
@@ -311,7 +309,10 @@ export function PersonDetailClient({ initialPerson }: { initialPerson: any }) {
                 </div>
               );
             })()}
+          </div>
 
+          {/* 2. Profile Content Section */}
+          <div className="px-6 pb-6 pt-16 sm:pt-20 relative z-10">
             <div className="space-y-4 max-w-4xl">
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2.5">
