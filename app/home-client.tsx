@@ -118,6 +118,8 @@ export function HomeClient({
                         <img
                           src={pack.coverUrl}
                           alt={pack.title}
+                          loading="lazy"
+                          decoding="async"
                           className="w-full h-full object-cover transition-transform"
                         />
                       ) : (

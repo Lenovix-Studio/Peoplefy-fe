@@ -212,6 +212,7 @@ export function PeoplesClient({
                     }
                     alt={person.fullName}
                     loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute bottom-3 right-3 z-20 flex items-center gap-1.5 bg-background/80 backdrop-blur-md px-2 py-1 rounded-lg border border-border/40 shadow-xs">
