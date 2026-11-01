@@ -12,6 +12,7 @@ import {
   Video,
   Star,
   ChevronLeft,
+  FolderUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,7 +77,25 @@ export function CreateContentClient({
     const rawFiles = e.target.files;
     if (!rawFiles || rawFiles.length === 0) return;
 
-    const fileArray = Array.from(rawFiles);
+    const fileArray = Array.from(rawFiles).filter(
+      (f) =>
+        f.type.startsWith("image/") ||
+        f.type.startsWith("video/") ||
+        /\.(heic|heif|jpg|jpeg|png|webp|mp4|mov|webm)$/i.test(f.name),
+    );
+
+    if (fileArray.length === 0) return;
+
+    if (!title.trim()) {
+      const firstWithPath = fileArray.find((f: any) => f.webkitRelativePath);
+      if (firstWithPath && (firstWithPath as any).webkitRelativePath) {
+        const parts = (firstWithPath as any).webkitRelativePath.split("/");
+        if (parts.length > 1) {
+          setTitle(parts[0]);
+        }
+      }
+    }
+
     const hasHeic = fileArray.some(
       (f) =>
         f.type === "image/heic" ||
@@ -329,17 +348,31 @@ export function CreateContentClient({
                 </p>
               </div>
 
-              <label className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg border border-border bg-muted/60 hover:bg-muted text-foreground text-xs font-medium cursor-pointer transition-colors shrink-0">
-                <Upload className="w-3.5 h-3.5 text-primary" />
-                <span>Tambah File</span>
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*,video/*"
-                  className="hidden"
-                  onChange={handleFileUpload}
-                />
-              </label>
+              <div className="flex items-center gap-2">
+                <label className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg border border-border bg-muted/60 hover:bg-muted text-foreground text-xs font-medium cursor-pointer transition-colors shrink-0">
+                  <FolderUp className="w-3.5 h-3.5 text-primary" />
+                  <span>Pilih Folder</span>
+                  <input
+                    type="file"
+                    multiple
+                    {...({ webkitdirectory: "", directory: "" } as any)}
+                    className="hidden"
+                    onChange={handleFileUpload}
+                  />
+                </label>
+
+                <label className="inline-flex items-center justify-center gap-1.5 h-8 px-3 rounded-lg border border-border bg-muted/60 hover:bg-muted text-foreground text-xs font-medium cursor-pointer transition-colors shrink-0">
+                  <Upload className="w-3.5 h-3.5 text-primary" />
+                  <span>Tambah File</span>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*,video/*"
+                    className="hidden"
+                    onChange={handleFileUpload}
+                  />
+                </label>
+              </div>
             </div>
 
             {conversionProgress && (
