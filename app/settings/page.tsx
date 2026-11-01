@@ -5,6 +5,8 @@ import { API_URL } from "@/constant/variable";
 import { CommonCodeType } from "@/types/common-code";
 import { SettingsTabs } from "@/components/settings/settings-tabs";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Setting System",
 };

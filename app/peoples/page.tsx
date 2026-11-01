@@ -1,6 +1,8 @@
 import { API_URL } from "@/constant/variable";
 import { PeoplesClient } from "./peoples-client";
 
+export const dynamic = "force-dynamic";
+
 export default async function PeoplesPage() {
   let allPeoples = [];
 
